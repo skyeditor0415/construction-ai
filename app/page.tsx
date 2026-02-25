@@ -7,6 +7,7 @@ export default function Home() {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"fast" | "detail">("fast");
+  const [statusText, setStatusText] = useState("");
 
   const quickQuestions = [
     "型枠の確認項目を教えて",
@@ -21,8 +22,21 @@ export default function Home() {
 
     setLoading(true);
     setAnswer("");
+    setStatusText("質問を送信しています…");
+
+    let statusTimer1: ReturnType<typeof setTimeout> | null = null;
+    let statusTimer2: ReturnType<typeof setTimeout> | null = null;
 
     try {
+      // 進行状況の見せ方（体感改善）
+      statusTimer1 = setTimeout(() => {
+        setStatusText("仕様書を検索しています…");
+      }, 500);
+
+      statusTimer2 = setTimeout(() => {
+        setStatusText("回答を作成しています…");
+      }, 1800);
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -30,9 +44,12 @@ export default function Home() {
         },
         body: JSON.stringify({
           question,
-          mode, // ← 追加
+          mode,
         }),
       });
+
+      if (statusTimer1) clearTimeout(statusTimer1);
+      if (statusTimer2) clearTimeout(statusTimer2);
 
       const data = await res.json();
 
@@ -42,9 +59,12 @@ export default function Home() {
         setAnswer(data.answer || "回答なし");
       }
     } catch (e: any) {
-      setAnswer(`通信エラー: ${e.message}`);
+      setAnswer(`通信エラー: ${e?.message || "不明なエラー"}`);
     } finally {
+      if (statusTimer1) clearTimeout(statusTimer1);
+      if (statusTimer2) clearTimeout(statusTimer2);
       setLoading(false);
+      setStatusText("");
     }
   };
 
@@ -61,6 +81,7 @@ export default function Home() {
   const handleClear = () => {
     setQuestion("");
     setAnswer("");
+    setStatusText("");
   };
 
   return (
@@ -75,14 +96,14 @@ export default function Home() {
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <h1 style={{ fontSize: 56, fontWeight: 800, marginBottom: 8 }}>
-          施工管理AIチャット（試作） v2
+          施工管理AIチャット（試作）
         </h1>
         <p style={{ color: "#aaa", fontSize: 20, marginBottom: 24 }}>
           建築工事標準仕様書ベースの回答を目指すチャットbot
         </p>
 
         {/* モード切替 */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
           <button
             onClick={() => setMode("fast")}
             style={{
@@ -138,7 +159,7 @@ export default function Home() {
           }}
         />
 
-        <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 12, flexWrap: "wrap" }}>
           <button
             onClick={handleAsk}
             disabled={loading}
@@ -151,7 +172,7 @@ export default function Home() {
               color: "#111",
               fontWeight: 700,
               fontSize: 18,
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.7 : 1,
             }}
           >
@@ -192,6 +213,32 @@ export default function Home() {
             クリア
           </button>
         </div>
+
+        {/* 進行表示 */}
+        {loading && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 12,
+              color: "#bbb",
+              fontSize: 14,
+            }}
+          >
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "#fff",
+                display: "inline-block",
+                animation: "pulse 1s infinite",
+              }}
+            />
+            <span>{statusText || "処理中…"}</span>
+          </div>
+        )}
 
         <div
           style={{
@@ -236,6 +283,23 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0% {
+            opacity: 0.2;
+            transform: scale(0.9);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          100% {
+            opacity: 0.2;
+            transform: scale(0.9);
+          }
+        }
+      `}</style>
     </main>
   );
 }

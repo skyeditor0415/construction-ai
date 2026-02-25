@@ -75,7 +75,7 @@ export default function Home() {
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <h1 style={{ fontSize: 56, fontWeight: 800, marginBottom: 8 }}>
-          施工管理AIチャット（試作）
+          施工管理AIチャット（試作） v2
         </h1>
         <p style={{ color: "#aaa", fontSize: 20, marginBottom: 24 }}>
           建築工事標準仕様書ベースの回答を目指すチャットbot
